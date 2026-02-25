@@ -8,6 +8,7 @@ set(SFML_DIR "C:/Users/user/OneDrive/Desktop/SFML-2.6.1-windows-gcc-13.1.0-mingw
 
 find_package(SFML 2 REQUIRED COMPONENTS graphics audio window system)
 
-add_executable(HelloKittyAdventure main.cpp)
+add_executable(HelloKittyAdventure main.cpp
+)
 
 target_link_libraries(HelloKittyAdventure sfml-graphics sfml-audio sfml-window sfml-system)

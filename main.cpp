@@ -4,144 +4,101 @@
 #include <string>
 
 int main() {
-    // ТВОЙ КОД (без изменений)
     sf::RenderWindow window(sf::VideoMode(1400, 700), "Hello Kitty Adventure");
     window.setFramerateLimit(60);
 
-    sf::Texture bgTexture;
-    if (!bgTexture.loadFromFile("login_screen.png")) return -1;
-    sf::Sprite background(bgTexture);
+    sf::Texture bgMenuTex, custBgTex, texPrev, texNext, texSelect, texPlay;
 
-    sf::Font font;
-    if (!font.loadFromFile("sniglet.ttf")) return -1;
+    if (!bgMenuTex.loadFromFile("login_screen.png") ||
+        !custBgTex.loadFromFile("customizer.png") ||
+        !texPrev.loadFromFile("btn_prev.png") ||
+        !texNext.loadFromFile("btn_next.png") ||
+        !texSelect.loadFromFile("btn_select.png") ||
+        !texPlay.loadFromFile("btn_play.png")) return -1;
 
-    sf::Text playButton;
-    playButton.setFont(font);
-    playButton.setString("PLAY");
-    playButton.setCharacterSize(100);
-    playButton.setFillColor(sf::Color::White);
-    playButton.setOutlineColor(sf::Color(255, 105, 180));
-    playButton.setOutlineThickness(5);
-    playButton.setStyle(sf::Text::Bold);
+    sf::Sprite background(bgMenuTex);
 
-    sf::FloatRect textRect = playButton.getLocalBounds();
-    playButton.setOrigin(textRect.left + textRect.width / 2.0f,
-                         textRect.top + textRect.height / 2.0f);
-    playButton.setPosition(250.f, 450.f);
+    sf::Sprite playBtn(texPlay);
+    playBtn.setOrigin(playBtn.getLocalBounds().width / 2.f, playBtn.getLocalBounds().height / 2.f);
+    playBtn.setPosition(250.f, 450.f);
 
-    bool gameStarted = false;
+    sf::Texture animTex1, animTex2;
+    animTex1.loadFromFile("kitty_hello1.png");
+    animTex2.loadFromFile("kitty_hello2.png");
+    sf::Sprite animKitty(animTex1);
+    animKitty.setPosition(800.f, 170.f);
+    animKitty.setScale(1.2f, 1.2f);
+    sf::Clock animClock;
 
-    // --- НОВАЯ ЧАСТЬ: КАСТОМИЗАЦИЯ (для студента) ---
-    bool customizationFinished = false;
-
-    // Загружаем фон комнаты
-    sf::Texture custBgTex;
-    custBgTex.loadFromFile("customizer.png");
     sf::Sprite custBg(custBgTex);
-
-    // Загружаем кнопки (просто картинки)
-    sf::Texture texPrev, texNext, texSelect;
-    texPrev.loadFromFile("btn_prev.png");
-    texNext.loadFromFile("btn_next.png");
-    texSelect.loadFromFile("btn_select.png");
-
     sf::Sprite sPrev(texPrev), sNext(texNext), sSelect(texSelect);
-    sPrev.setPosition(450, 400);
-    sNext.setPosition(850, 400);
-    sSelect.setPosition(600, 600);
+    sPrev.setPosition(450, 450);
+    sNext.setPosition(850, 450);
+    sSelect.setPosition(730, 650);
+    sSelect.setOrigin(sSelect.getLocalBounds().width / 2.f, sSelect.getLocalBounds().height / 2.f);
 
-    // Список персонажей
-    std::vector<sf::Texture> kittyTextures(5);
+    std::vector<sf::Texture> kTex(5);
     std::string files[] = {"classic_kitty.png", "adventure_kitty.png", "sweet_kitty.png", "cozy_kitty.png", "magical_kitty.png"};
+    for (int i = 0; i < 5; i++) kTex[i].loadFromFile(files[i]);
 
-    for (int i = 0; i < 5; i++) {
-        if (!kittyTextures[i].loadFromFile(files[i])) {
-            std::cout << "Error: " << files[i] << " not found!" << std::endl;
-        }
-    }
+    int current = 0;
+    sf::Sprite kitty(kTex[current]);
 
-    int currentKitty = 0;
-    sf::Sprite currentSprite(kittyTextures[currentKitty]);
-    currentSprite.setScale(1.5f, 1.5f);
-    currentSprite.setPosition(450, 180);
+    auto updateView = [&]() {
+        kitty.setTexture(kTex[current]);
+        kitty.setPosition(370.f, 60.f);
+        kitty.setScale(1.5f, 1.5f);
+    };
+    updateView();
 
-    // --- ГЛАВНЫЙ ЦИКЛ ---
+    bool gameStarted = false, customizationFinished = false;
+
     while (window.isOpen()) {
+        sf::Vector2f mPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         sf::Event event;
+
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
-                window.close();
+            if (event.type == sf::Event::Closed) window.close();
 
-            // Логика кликов
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                sf::Vector2f mPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
                 if (!gameStarted) {
-                    // ТВОЙ КОД: Клик по PLAY
-                    if (playButton.getGlobalBounds().contains(mPos)) {
-                        gameStarted = true;
-                        std::cout << "Starting customization..." << std::endl;
-                    }
+                    if (playBtn.getGlobalBounds().contains(mPos)) gameStarted = true;
                 }
                 else if (!customizationFinished) {
-                    // КЛИКИ В КАСТОМИЗАЦИИ
-                    if (sPrev.getGlobalBounds().contains(mPos)) {
-                        currentKitty = (currentKitty - 1 + 5) % 5;
-                        currentSprite.setTexture(kittyTextures[currentKitty]);
-                        std::cout << "Switched to: " << files[currentKitty] << std::endl;
-                    }
-                    if (sNext.getGlobalBounds().contains(mPos)) {
-                        currentKitty = (currentKitty + 1) % 5;
-                        currentSprite.setTexture(kittyTextures[currentKitty]);
-                        std::cout << "Switched to: " << files[currentKitty] << std::endl;
-                    }
-                    if (sSelect.getGlobalBounds().contains(mPos)) {
-                        customizationFinished = true;
-                        std::cout << "Final choice: " << files[currentKitty] << ". Starting quest!" << std::endl;
-                    }
+                    if (sPrev.getGlobalBounds().contains(mPos)) { current = (current - 1 + 5) % 5; updateView(); }
+                    if (sNext.getGlobalBounds().contains(mPos)) { current = (current + 1) % 5; updateView(); }
+                    if (sSelect.getGlobalBounds().contains(mPos)) customizationFinished = true;
                 }
             }
         }
 
-        // ТВОЙ КОД: Эффект наведения для кнопки PLAY
-        sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
         if (!gameStarted) {
-            if (playButton.getGlobalBounds().contains(mousePos)) {
-                playButton.setFillColor(sf::Color(255, 105, 180));
-                playButton.setOutlineColor(sf::Color::White);
-                playButton.setScale(1.1f, 1.1f);
-            } else {
-                playButton.setFillColor(sf::Color::White);
-                playButton.setOutlineColor(sf::Color(255, 105, 180));
-                playButton.setScale(1.0f, 1.0f);
+            if (animClock.getElapsedTime().asSeconds() > 0.5f) {
+                animKitty.setTexture(animKitty.getTexture() == &animTex1 ? animTex2 : animTex1);
+                animClock.restart();
             }
+
+            bool hover = playBtn.getGlobalBounds().contains(mPos);
+            playBtn.setScale(hover ? 1.1f : 1.0f, hover ? 1.1f : 1.0f);
         }
 
-        // ОТРИСОВКА
         window.clear();
 
         if (!gameStarted) {
-            // Рисуем меню
             window.draw(background);
-            window.draw(playButton);
+            window.draw(playBtn);
+            window.draw(animKitty);
         }
         else if (!customizationFinished) {
-            // Рисуем кастомизацию
             window.draw(custBg);
-            window.draw(currentSprite);
-            window.draw(sPrev);
-            window.draw(sNext);
-            window.draw(sSelect);
+            window.draw(kitty);
+            window.draw(sPrev); window.draw(sNext); window.draw(sSelect);
         }
         else {
-            // Рисуем сам Квест (белый экран с Китти)
-            window.clear(sf::Color::White);
-            currentSprite.setPosition(100, 300); // Китти в начале уровня
-            window.draw(currentSprite);
+            window.clear(sf::Color(255, 192, 203));
         }
 
         window.display();
     }
-
     return 0;
 }
